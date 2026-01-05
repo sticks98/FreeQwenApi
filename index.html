@@ -244,18 +244,18 @@
     </div>
 
     <script>
+        
         // Замена LaTeX формул на теги MathJax
         function replaceLatex(text) {
-            // Заменяем формулы в квадратных скобках [...] на блочные теги MathJax
-            text = text.replace(/\[\s*\\?[(\[](.+?)\\?[)\]]\s*\]/g, '\\[$1\\]');
-            // Заменяем формулы в круглых скобках (...) на inline теги MathJax
-            text = text.replace(/\(\s*\\?[(\[](.+?)\\?[)\]]\s*\)/g, '\\($1\\)');
+            // Заменяем экранированные блочные формулы \\[ ... \\] на MathJax блочные теги
+            text = text.replace(/\\\[(.*?)\\\]/g, '\\\\[$1\\\\]');
+            // Заменяем экранированные inline формулы \\( ... \\) на MathJax inline теги
+            text = text.replace(/\\\((.*?)\\\)/g, '\\\\($1\\\\)');
             // Также поддерживаем старые форматы $...$ и $$...$$
-            text = text.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
-            text = text.replace(/\$(.*?)\$/g, '\\($1\\)');
+            text = text.replace(/\\$\\$(.*?)\\$\\$/g, '\\\\[$1\\\\]');
+            text = text.replace(/\\$(.*?)\\$/g, '\\\\($1\\\\)');
             return text;
         }
-        
         const contextFile = document.getElementById('context-file');
         const contextTextarea = document.getElementById('context');
         const questionInput = document.getElementById('question');
