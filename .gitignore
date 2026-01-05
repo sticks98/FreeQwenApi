@@ -1,9 +1,3 @@
 ```
-# Backup files
-*.backup
-*.backup2
-
-# Temporary files
-*.tmp
-*.temp
+*.bak
 ```
