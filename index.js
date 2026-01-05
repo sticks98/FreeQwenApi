@@ -28,6 +28,11 @@ if (Number.isNaN(port) || port <= 0 || port > 65535) {
 
 const skipAccountMenu = toBoolean(process.env.SKIP_ACCOUNT_MENU) || toBoolean(process.env.NON_INTERACTIVE);
 
+function toBoolean(value) {
+    if (typeof value !== 'string') return false;
+    return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
 function prompt(question) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     return new Promise(res => rl.question(question, ans => { rl.close(); res(ans.trim()); }));

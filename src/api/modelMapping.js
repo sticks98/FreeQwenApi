@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Модуль для маппинга моделей Qwen
+ * Содержит список доступных моделей и их алиасов для совместимости
+ */
+
+/**
+ * Список основных (канонических) моделей Qwen
+ * @type {Array<string>}
+ */
 const CANONICAL_MODELS = Object.freeze([
     "qwen3-max",
     "qwen3-vl-plus",
@@ -19,8 +28,16 @@ const CANONICAL_MODELS = Object.freeze([
     "qwen2.5-72b-instruct"
 ]);
 
+/**
+ * Множество канонических моделей для быстрой проверки
+ * @type {Set<string>}
+ */
 const CANONICAL_MODEL_SET = new Set(CANONICAL_MODELS);
 
+/**
+ * Группы алиасов для моделей
+ * @type {Object<string, Array<string>>}
+ */
 const ALIAS_GROUPS = Object.freeze({
     "qwen3-max": [
         "qwen-max",
@@ -133,13 +150,19 @@ const ALIAS_GROUPS = Object.freeze({
     ]
 });
 
+/**
+ * Создает маппинг моделей из алиасов в канонические имена
+ * @returns {Object<string, string>} Объект маппинга
+ */
 const buildModelMapping = () => {
     const mapping = Object.create(null);
 
+    // Добавляем прямое соответствие для канонических моделей
     for (const model of CANONICAL_MODELS) {
         mapping[model] = model;
     }
 
+    // Добавляем алиасы для моделей
     for (const [target, aliases] of Object.entries(ALIAS_GROUPS)) {
         if (!CANONICAL_MODEL_SET.has(target)) {
             continue;
@@ -154,6 +177,10 @@ const buildModelMapping = () => {
     return Object.freeze(mapping);
 };
 
+/**
+ * Объект маппинга моделей
+ * @type {Object<string, string>}
+ */
 export const MODEL_MAPPING = buildModelMapping();
 
 /**
