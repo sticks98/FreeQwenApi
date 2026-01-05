@@ -8,8 +8,8 @@
     <script>
       MathJax = {
         tex: {
-          inlineMath: [['\\(', '\\)']],
-          displayMath: [['\\[', '\\]']],
+          inlineMath: [['\\\\(', '\\\\)']],
+          displayMath: [['\\\\[', '\\\\]']],
           processEscapes: true,
           processEnvironments: true
         },
@@ -231,7 +231,7 @@
                 </div>
                 <textarea
                     id="context"
-                    placeholder="Загрузите текстовый документ или введите контекст вручную"
+                    placeholder="Загрузите текстовый документ или введите контент вручную"
                 ></textarea>
             </div>
             
@@ -257,8 +257,7 @@
     </div>
 
     <script>
-        // MathJax уже обрабатывает формулы с правильными тегами \\[\\] и \\(\\), 
-        // которые приходят от сервера, поэтому не нужно ничего дополнительно экранировать
+        // Обработка MathJax формул, приходящих от сервера в виде \\( ... \\) и \\[ ... \\]
         const contextFile = document.getElementById('context-file');
         const contextTextarea = document.getElementById('context');
         const questionInput = document.getElementById('question');
@@ -321,17 +320,21 @@
                 }
 
                 const result = await response.json();
-                const markdownContent = result.choices[0].message.content;
+                let markdownContent = result.choices[0].message.content;
                 
-                // Сервер уже возвращает правильно экранированные формулы MathJax
-                // Оставляем контент как есть, без дополнительной обработки формул
-                let processedContent = markdownContent;
-                
-                responseContent.innerHTML = marked.parse(processedContent);
+                // Обработка контента для корректного отображения MathJax формул
+                // Сервер возвращает формулы в формате \\( ... \\) и \\[ ... \\]
+                responseContent.innerHTML = marked.parse(markdownContent);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {
-                    MathJax.typesetPromise([responseContent]);
+                    // Ждем полной загрузки MathJax перед рендерингом
+                    await MathJax.startup.promise.then(() => {
+                        MathJax.typesetPromise([responseContent]);
+                    });
+                } else {
+                    // Если MathJax не загрузился, просто отображаем контент
+                    responseSection.style.display = 'block';
                 }
                 
                 responseSection.style.display = 'block';
@@ -339,15 +342,15 @@
                 console.error('Error:', error);
                 const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
                 
-                // Сервер уже возвращает правильно экранированные формулы MathJax
-                // Оставляем контент как есть, без дополнительной обработки формул
-                let processedErrorContent = errorText;
-                
-                responseContent.innerHTML = marked.parse(processedErrorContent);
+                responseContent.innerHTML = marked.parse(errorText);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {
-                    MathJax.typesetPromise([responseContent]);
+                    await MathJax.startup.promise.then(() => {
+                        MathJax.typesetPromise([responseContent]);
+                    });
+                } else {
+                    responseSection.style.display = 'block';
                 }
                 
                 responseSection.style.display = 'block';
