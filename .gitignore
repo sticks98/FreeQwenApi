@@ -1,9 +1,1 @@
-```
-# Backup files
-*.backup
-*.backup2
-
-# Temporary files
-*.tmp
-*.temp
-```
+Nothing should be ignored based on the provided file changes. The changes only include source files (test_form.html and index.html), which should not be added to .gitignore.
