@@ -37,7 +37,15 @@ export function loadTokens() {
 export function saveTokens(tokens) {
     ensureSessionDir();
     try {
-        fs.writeFileSync(TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf8');
+        if (!Array.isArray(tokens)) {
+            console.error('TokenManager: попытка сохранить некорректные данные, ожидался массив');
+            return;
+        }
+        
+        // Проверяем, что все элементы массива являются объектами
+        const validTokens = tokens.filter(token => typeof token === 'object' && token !== null);
+        
+        fs.writeFileSync(TOKENS_FILE, JSON.stringify(validTokens, null, 2), 'utf8');
     } catch (e) {
         console.error('TokenManager: ошибка сохранения tokens.json:', e);
     }
@@ -66,6 +74,8 @@ export function markRateLimited(id, hours = 24) {
         const until = new Date(Date.now() + hours * 3600 * 1000).toISOString();
         tokens[idx].resetAt = until;
         saveTokens(tokens);
+    } else {
+        console.warn(`TokenManager: токен с id ${id} не найден для пометки как RateLimited`);
     }
 }
 
@@ -73,6 +83,10 @@ export function removeToken(id) {
     const tokens = loadTokens();
     const filtered = tokens.filter(t => t.id !== id);
     saveTokens(filtered);
+    
+    if (filtered.length === tokens.length) {
+        console.warn(`TokenManager: токен с id ${id} не найден для удаления`);
+    }
 }
 
 export { removeToken as removeInvalidToken };
@@ -83,6 +97,8 @@ export function markInvalid(id) {
     if (idx !== -1) {
         tokens[idx].invalid = true;
         saveTokens(tokens);
+    } else {
+        console.warn(`TokenManager: токен с id ${id} не найден для пометки как недействительный`);
     }
 }
 
@@ -94,6 +110,8 @@ export function markValid(id, newToken) {
         tokens[idx].resetAt = null;
         if (newToken) tokens[idx].token = newToken;
         saveTokens(tokens);
+    } else {
+        console.warn(`TokenManager: токен с id ${id} не найден для пометки как действительный`);
     }
 }
 

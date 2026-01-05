@@ -61,13 +61,16 @@ function authMiddleware(req, res, next) {
     next();
 }
 
-router.use(authMiddleware);
-router.use((req, res, next) => {
+// Middleware для проверки и нормализации URL
+function normalizeUrlMiddleware(req, res, next) {
     req.url = req.url
         .replace(/\/v[12](?=\/|$)/g, '')
         .replace(/\/+/g, '/');
     next();
-});
+}
+
+router.use(authMiddleware);
+router.use(normalizeUrlMiddleware);
 
 router.post('/chat', async (req, res) => {
     try {
