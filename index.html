@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерфейс для работы с API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .api-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .context-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #context-file {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .file-hint {
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .submit-btn {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .submit-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .response-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .response-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .response-content {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Интерфейс для работы с API</h1>
+        
+        <form id="apiForm" class="api-form">
+            <div class="form-group">
+                <label for="context">Контекст:</label>
+                <div class="context-controls">
+                    <input
+                        type="file"
+                        id="context-file"
+                        accept=".txt"
+                    />
+                    <span class="file-hint">Загрузите текстовый документ</span>
+                </div>
+                <textarea
+                    id="context"
+                    placeholder="Загрузите текстовый документ или введите контекст вручную"
+                ></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="question">Вопрос:</label>
+                <input
+                    type="text"
+                    id="question"
+                    placeholder="Введите ваш вопрос"
+                    required
+                />
+            </div>
+            
+            <button type="submit" id="submitBtn" class="submit-btn">
+                Отправить запрос
+            </button>
+        </form>
+        
+        <div id="responseSection" class="response-section" style="display: none;">
+            <h2>Ответ от API:</h2>
+            <div id="responseContent" class="response-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const contextFile = document.getElementById('context-file');
+        const contextTextarea = document.getElementById('context');
+        const questionInput = document.getElementById('question');
+        const apiForm = document.getElementById('apiForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const responseSection = document.getElementById('responseSection');
+        const responseContent = document.getElementById('responseContent');
+
+        // Handle file upload
+        contextFile.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    contextTextarea.value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Handle form submission
+        apiForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const question = questionInput.value.trim();
+            if (!question) {
+                alert('Пожалуйста, введите вопрос');
+                return;
+            }
+
+            const context = contextTextarea.value;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+            responseSection.style.display = 'none';
+
+            try {
+                const content = `Контекст: ${context}; Вопрос: ${question}; Задача: Используя только контекст ответь на вопрос. Если в контексте нет информации по вопросу, тогда ответь 'Я не знаю'`;
+                
+                const url = "http://localhost:3264/api/chat/completions";
+                const headers = {"Content-Type": "application/json"};
+                const data = {
+                    "messages": [
+                        {"role": "user", "content": content}
+                    ],
+                    "model": "qwen3-max",
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                responseContent.textContent = result.choices[0].message.content;
+                responseSection.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                responseContent.textContent = 'Произошла ошибка при отправке запроса: ' + error.message;
+                responseSection.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить запрос';
+            }
+        });
+    </script>
+</body>
+</html>

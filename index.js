@@ -74,6 +74,9 @@ app.use((req, res, next) => {
     next();
 });
 
+// Serve static files from the root directory
+app.use(express.static('.'));
+
 app.use('/api', apiRoutes);
 
 // Обработчик 404
