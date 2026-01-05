@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Интерфейс для работы с API</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -120,8 +121,70 @@
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 4px;
-            white-space: pre-wrap;
             line-height: 1.6;
+            overflow-x: auto;
+        }
+        
+        .response-content p {
+            margin: 0 0 1em 0;
+        }
+        
+        .response-content h1,
+        .response-content h2,
+        .response-content h3,
+        .response-content h4,
+        .response-content h5,
+        .response-content h6 {
+            margin: 1em 0 0.5em 0;
+        }
+        
+        .response-content ul,
+        .response-content ol {
+            padding-left: 20px;
+            margin: 1em 0;
+        }
+        
+        .response-content li {
+            margin: 0.5em 0;
+        }
+        
+        .response-content pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        
+        .response-content code {
+            background-color: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .response-content blockquote {
+            border-left: 3px solid #ccc;
+            padding-left: 10px;
+            margin: 1em 0;
+            padding: 0.5em 0 0.5em 10px;
+        }
+        
+        .response-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        
+        .response-content th,
+        .response-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .response-content th {
+            background-color: #f2f2f2;
         }
 
         @media (max-width: 600px) {
@@ -239,11 +302,13 @@
                 }
 
                 const result = await response.json();
-                responseContent.textContent = result.choices[0].message.content;
+                const markdownContent = result.choices[0].message.content;
+                responseContent.innerHTML = marked.parse(markdownContent);
                 responseSection.style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
-                responseContent.textContent = 'Произошла ошибка при отправке запроса: ' + error.message;
+                const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
+                responseContent.innerHTML = marked.parse(errorText);
                 responseSection.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
