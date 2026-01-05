@@ -244,18 +244,8 @@
     </div>
 
     <script>
-        
-        // Замена LaTeX формул на теги MathJax
-        function replaceLatex(text) {
-            // Заменяем блочные формулы \\[ ... ]\\ на MathJax блочные теги \\[ ... \\]
-            text = text.replace(/\\\\\\[(.*?)\\\\\]/g, '\\\\\\\\[$1\\\\\\\\]');
-            // Заменяем экранированные inline формулы \\\\( ... \\\\) на MathJax inline теги
-            text = text.replace(/\\\\\\((.*?)\\\\\\)/g, '\\\\\\\\($1\\\\\\\\)');
-            // Также поддерживаем старые форматы $...$ и $$...$$
-            text = text.replace(/\\\\$\\\\$(.*?)\\\\$\\\\$/g, '\\\\\\\\[$1\\\\\\\\]');
-            text = text.replace(/\\\\$(.*?)\\\\$/g, '\\\\\\\\($1\\\\\\\\)');
-            return text;
-        }
+        // MathJax уже обрабатывает формулы с правильными тегами \\[\\] и \\(\\), 
+        // которые приходят от сервера, поэтому не нужно ничего дополнительно экранировать
         const contextFile = document.getElementById('context-file');
         const contextTextarea = document.getElementById('context');
         const questionInput = document.getElementById('question');
@@ -320,8 +310,8 @@
                 const result = await response.json();
                 const markdownContent = result.choices[0].message.content;
                 
-                const processedContent = replaceLatex(markdownContent);
-                responseContent.innerHTML = marked.parse(processedContent);
+                // Просто используем контент как есть, т.к. сервер возвращает правильно отформатированные формулы
+                responseContent.innerHTML = marked.parse(markdownContent);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {
@@ -333,8 +323,7 @@
                 console.error('Error:', error);
                 const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
                 
-                const processedErrorText = replaceLatex(errorText);
-                responseContent.innerHTML = marked.parse(processedErrorText);
+                responseContent.innerHTML = marked.parse(errorText);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {
