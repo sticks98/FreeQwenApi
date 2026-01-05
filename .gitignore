@@ -1,1 +1,1 @@
-Nothing needs to be added to the .gitignore file based on the provided changes. The modification of 'index.html' does not require any new ignore rules, as it's a standard HTML file that should be tracked in version control.
+(index.html is a source file, no build artifacts, dependencies, or temp files in the changes)
