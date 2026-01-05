@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Интерфейс для работы с API</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          ignoreHtmlClass: '.*|',
+          processHtmlClass: 'arithmatex'
+        }
+      };
+    </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
@@ -310,8 +323,16 @@
                 const result = await response.json();
                 const markdownContent = result.choices[0].message.content;
                 
-                // Просто используем контент как есть, т.к. сервер возвращает правильно отформатированные формулы
-                responseContent.innerHTML = marked.parse(markdownContent);
+                // Заменяем LaTeX-формулы на формат, подходящий для MathJax
+                let processedContent = markdownContent
+                    // Обрабатываем display math (окруженные $$ или \[ \])
+                    .replace(/\$\$(.*?)\$\$/g, '\\[ $1 \\]')
+                    .replace(/\\\[(.*?)\\\]/g, '\\[ $1 \\]')
+                    // Обрабатываем inline math (окруженные $ или \( \))
+                    .replace(/\$(.*?)\$/g, '\\( $1 \\)')
+                    .replace(/\\\((.*?)\\\)/g, '\\( $1 \\)');
+                
+                responseContent.innerHTML = marked.parse(processedContent);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {
@@ -323,7 +344,16 @@
                 console.error('Error:', error);
                 const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
                 
-                responseContent.innerHTML = marked.parse(errorText);
+                // Обрабатываем возможные формулы в тексте ошибки
+                let processedErrorContent = errorText
+                    // Обрабатываем display math (окруженные $$ или \[ \])
+                    .replace(/\$\$(.*?)\$\$/g, '\\[ $1 \\]')
+                    .replace(/\\\[(.*?)\\\]/g, '\\[ $1 \\]')
+                    // Обрабатываем inline math (окруженные $ или \( \))
+                    .replace(/\$(.*?)\$/g, '\\( $1 \\)')
+                    .replace(/\\\((.*?)\\\)/g, '\\( $1 \\)');
+                
+                responseContent.innerHTML = marked.parse(processedErrorContent);
                 
                 // Обновляем MathJax после вставки контента
                 if (typeof MathJax !== 'undefined') {

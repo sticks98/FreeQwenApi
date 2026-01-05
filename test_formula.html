@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест формул</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          ignoreHtmlClass: '.*|',
+          processHtmlClass: 'arithmatex'
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="content">
+        <h1>Тестирование формул</h1>
+        <p>Формула в виде: [ P_{газ,X} = P_{газ,X-1} \cdot R_{газ,X}, ]</p>
+        <p>Или ( P_{газ,X} )</p>
+        <p>Должно отображаться как: \\( P_{газ,X} \\)</p>
+        <p>Или как: \\[ P_{газ,X} = P_{газ,X-1} \cdot R_{газ,X} \\]</p>
+    </div>
+    
+    <script>
+        // Simulate the processing that happens in the main file
+        let content = document.getElementById('content').innerHTML;
+        
+        // Replace formulas to proper MathJax format
+        let processedContent = content
+            // Обрабатываем display math (окруженные $$ или \[ \])
+            .replace(/\$\$(.*?)\$\$/g, '\\[ $1 \\]')
+            .replace(/\\\[(.*?)\\\]/g, '\\[ $1 \\]')
+            // Обрабатываем inline math (окруженные $ или \( \))
+            .replace(/\$(.*?)\$/g, '\\( $1 \\)')
+            .replace(/\\\((.*?)\\\)/g, '\\( $1 \\)');
+        
+        document.getElementById('content').innerHTML = processedContent;
+        
+        // Update MathJax after inserting content
+        if (typeof MathJax !== 'undefined') {
+            MathJax.typesetPromise([document.getElementById('content')]);
+        }
+    </script>
+</body>
+</html>
