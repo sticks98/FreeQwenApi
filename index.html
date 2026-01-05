@@ -323,14 +323,9 @@
                 const result = await response.json();
                 const markdownContent = result.choices[0].message.content;
                 
-                // Заменяем LaTeX-формулы на формат, подходящий для MathJax
-                let processedContent = markdownContent
-                    // Обрабатываем display math (окруженные $$ или \[ \])
-                    .replace(/\$\$(.*?)\$\$/g, '\\[ $1 \\]')
-                    .replace(/\\\[(.*?)\\\]/g, '\\[ $1 \\]')
-                    // Обрабатываем inline math (окруженные $ или \( \))
-                    .replace(/\$(.*?)\$/g, '\\( $1 \\)')
-                    .replace(/\\\((.*?)\\\)/g, '\\( $1 \\)');
+                // Сервер уже возвращает правильно экранированные формулы MathJax
+                // Оставляем контент как есть, без дополнительной обработки формул
+                let processedContent = markdownContent;
                 
                 responseContent.innerHTML = marked.parse(processedContent);
                 
@@ -344,14 +339,9 @@
                 console.error('Error:', error);
                 const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
                 
-                // Обрабатываем возможные формулы в тексте ошибки
-                let processedErrorContent = errorText
-                    // Обрабатываем display math (окруженные $$ или \[ \])
-                    .replace(/\$\$(.*?)\$\$/g, '\\[ $1 \\]')
-                    .replace(/\\\[(.*?)\\\]/g, '\\[ $1 \\]')
-                    // Обрабатываем inline math (окруженные $ или \( \))
-                    .replace(/\$(.*?)\$/g, '\\( $1 \\)')
-                    .replace(/\\\((.*?)\\\)/g, '\\( $1 \\)');
+                // Сервер уже возвращает правильно экранированные формулы MathJax
+                // Оставляем контент как есть, без дополнительной обработки формул
+                let processedErrorContent = errorText;
                 
                 responseContent.innerHTML = marked.parse(processedErrorContent);
                 
