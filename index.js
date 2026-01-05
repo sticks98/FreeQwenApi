@@ -38,11 +38,6 @@ function prompt(question) {
     return new Promise(res => rl.question(question, ans => { rl.close(); res(ans.trim()); }));
 }
 
-function toBoolean(value) {
-    if (typeof value !== 'string') return false;
-    return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
-}
-
 function ensureNonInteractiveTokens() {
     const tokens = loadTokens();
     if (!tokens.length) {
