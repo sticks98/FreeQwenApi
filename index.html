@@ -5,21 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Интерфейс для работы с API</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-      MathJax = {
-        tex: {
-          inlineMath: [['\\\\(', '\\\\)']],
-          displayMath: [['\\\\[', '\\\\]']],
-          processEscapes: true,
-          processEnvironments: true
-        },
-        options: {
-          ignoreHtmlClass: '.*|',
-          processHtmlClass: 'arithmatex'
-        }
-      };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+	<script>
+	  MathJax = {
+		tex: {
+		  inlineMath: [['\\(', '\\)']],
+		  displayMath: [['\\[', '\\]']],
+		  processEscapes: true
+		},
+		options: {
+		  ignoreHtmlClass: '.*',
+		  processHtmlClass: '.*'
+		}
+	  };
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -320,24 +319,54 @@
                 }
 
                 const result = await response.json();
-                let markdownContent = result.choices[0].message.content;
-                
-                // Обработка контента для корректного отображения MathJax формул
-                // Сервер возвращает формулы в формате \\( ... \\) и \\[ ... \\]
-                responseContent.innerHTML = marked.parse(markdownContent);
-                
-                // Обновляем MathJax после вставки контента
-                if (typeof MathJax !== 'undefined') {
-                    // Ждем полной загрузки MathJax перед рендерингом
-                    await MathJax.startup.promise.then(() => {
-                        MathJax.typesetPromise([responseContent]);
-                    });
-                } else {
-                    // Если MathJax не загрузился, просто отображаем контент
-                    responseSection.style.display = 'block';
-                }
-                
-                responseSection.style.display = 'block';
+				
+				function renderMarkdownWithMath(markdown) {
+				  const mathBlocks = [];
+
+				  let processed = markdown.replace(/\\\[((?:.|\n)*?)\\\]/g, (match, formula) => {
+					mathBlocks.push(`\\[${formula}\\]`);
+					return `<div class="math-display">${mathBlocks.length - 1}</div>`;
+				  });
+
+				  processed = processed.replace(/\\\(((?:.|\n)*?)\\\)/g, (match, formula) => {
+					mathBlocks.push(`\\(${formula}\\)`);
+					return `<span class="math-inline">${mathBlocks.length - 1}</span>`;
+				  });
+
+				  let html = marked.parse(processed);
+
+				  html = html.replace(/<div class="math-display">(\d+)<\/div>/g, (match, index) => {
+					return mathBlocks[Number(index)];
+				  });
+
+				  html = html.replace(/<span class="math-inline">(\d+)<\/span>/g, (match, index) => {
+					return mathBlocks[Number(index)];
+				  });
+
+				  return html;
+				}
+
+				let markdownContent = result.choices[0].message.content;
+				let safeHtml = renderMarkdownWithMath(markdownContent);
+				responseContent.innerHTML = safeHtml;
+
+				if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+				  MathJax.typesetClear([responseContent]);
+				  MathJax.typeset([responseContent]);
+				} else {
+				  // Fallback: ждём загрузку MathJax
+				  const waitForMathJax = () => {
+					if (window.MathJax && MathJax.typeset) {
+					  MathJax.typesetClear([responseContent]);
+					  MathJax.typeset([responseContent]);
+					} else {
+					  setTimeout(waitForMathJax, 100);
+					}
+				  };
+				  waitForMathJax();
+				}
+
+				responseSection.style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
                 const errorText = 'Произошла ошибка при отправке запроса: ' + error.message;
