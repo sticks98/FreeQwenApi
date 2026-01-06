@@ -183,7 +183,8 @@ def create_new_chat(api_url: str, headers: Dict[str, str], model: str, name: str
 
 def format_markdown_with_math(text: str) -> str:
     """Format markdown text with proper math rendering for Streamlit"""
-    # First, temporarily encode the display math regions to avoid processing inside them
+    
+    # Обработка display-формул: \[ ... \] → $$ ... $$
     display_math_pattern = r'\\\[(.*?)\\\]'
     display_placeholders = []
     
@@ -193,9 +194,10 @@ def format_markdown_with_math(text: str) -> str:
         display_placeholders.append(content)
         return placeholder
     
-    text = re.sub(display_math_pattern, replace_display_math, text)
+    # ВАЖНО: флаг re.DOTALL (или re.S), чтобы . захватывал \n
+    text = re.sub(display_math_pattern, replace_display_math, text, flags=re.DOTALL)
     
-    # Then, temporarily encode the inline math regions to avoid processing inside them
+    # Обработка inline-формул: \( ... \) → $ ... $
     inline_math_pattern = r'\\\((.*?)\\\)'
     inline_placeholders = []
     
@@ -205,22 +207,14 @@ def format_markdown_with_math(text: str) -> str:
         inline_placeholders.append(content)
         return placeholder
     
-    text = re.sub(inline_math_pattern, replace_inline_math, text)
+    text = re.sub(inline_math_pattern, replace_inline_math, text, flags=re.DOTALL)
     
-    # Now handle the specific formula elements from the user's example
-    # These are outside math regions so they won't be double-processed
-    text = re.sub(r'K_\{газX\}', r'$K_{газX}$', text)
-    text = re.sub(r'C_\{X-1\}', r'$C_{X-1}$', text)
-    text = re.sub(r'C_\{X-4\}', r'$C_{X-4}$', text)
-    text = re.sub(r'R_\{газj\}', r'$R_{газj}$', text)
-    text = re.sub(r'\\sum_\{j=X-3\}\^\{X-1\}', r'$\\sum_{j=X-3}^{X-1}$', text)
-    
-    # Now restore the display math regions with proper $$...$$ formatting
+    # Восстановление display-формул
     for i, content in enumerate(display_placeholders):
         placeholder = f"__DISPLAY_MATH_PLACEHOLDER_{i}__"
         text = text.replace(placeholder, f"$${content}$$")
     
-    # And restore the inline math regions with proper $...$ formatting
+    # Восстановление inline-формул
     for i, content in enumerate(inline_placeholders):
         placeholder = f"__INLINE_MATH_PLACEHOLDER_{i}__"
         text = text.replace(placeholder, f"${content}$")
@@ -229,7 +223,6 @@ def format_markdown_with_math(text: str) -> str:
 
 def main():
     st.markdown('<h1 class="main-header">🤖 API Interface for Qwen</h1>', unsafe_allow_html=True)
-    
     # Initialize session state
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
@@ -242,7 +235,7 @@ def main():
     if 'api_key' not in st.session_state:
         st.session_state.api_key = ""
     if 'selected_model' not in st.session_state:
-        st.session_state.selected_model = "qwen-max"
+        st.session_state.selected_model = "qwen3-max"
     if 'available_models' not in st.session_state:
         st.session_state.available_models = []
     
@@ -378,9 +371,14 @@ def main():
                 # Add system message if context is provided
                 if context.strip():
                     messages.append({
-                        "role": "system",
-                        "content": f"Контекст: {context}; Задача: Используя только контекст ответь на вопрос. Если в контексте нет информации по вопросу, тогда ответь 'Я не знаю'"
-                    })
+                                            "role": "system",
+                                            "content": f"""Контекст: {context}; Задача: Используя только контекст ответь на вопрос. 
+                                                            При этом:
+                                                                Используй только достоверные и актуальные положения этих документов;
+                                                                Обязательно укажи из какого раздела и пункта документа взята информация;
+                                                                Не интерпретируй нормы — цитируй или переформулируй их максимально близко к оригиналу;
+                                                                Если искомая информация в указанных документах отсутствует, прямо сообщи об этом, не предлагая предположений, тогда ответь 'Я не знаю'"""
+                                        })
                 
                 # Add previous messages if in a chat session
                 for msg in st.session_state.chat_history:
