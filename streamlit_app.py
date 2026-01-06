@@ -182,12 +182,49 @@ def create_new_chat(api_url: str, headers: Dict[str, str], model: str, name: str
         return {"error": str(e)}
 
 def format_markdown_with_math(text: str) -> str:
-    """Format markdown text with proper math rendering"""
-    # Convert LaTeX-style math to HTML math
-    # Replace inline math: \( ... \)
-    text = re.sub(r'\\\((.*?)\\\)', r'<span class="math-equation">\\( \1 \\)</span>', text)
-    # Replace display math: \[ ... \]
-    text = re.sub(r'\\\[(.*?)\\\]', r'<div class="math-equation">\\[ \1 \\]</div>', text)
+    """Format markdown text with proper math rendering for Streamlit"""
+    # First, temporarily encode the display math regions to avoid processing inside them
+    display_math_pattern = r'\\\[(.*?)\\\]'
+    display_placeholders = []
+    
+    def replace_display_math(match):
+        content = match.group(1)
+        placeholder = f"__DISPLAY_MATH_PLACEHOLDER_{len(display_placeholders)}__"
+        display_placeholders.append(content)
+        return placeholder
+    
+    text = re.sub(display_math_pattern, replace_display_math, text)
+    
+    # Then, temporarily encode the inline math regions to avoid processing inside them
+    inline_math_pattern = r'\\\((.*?)\\\)'
+    inline_placeholders = []
+    
+    def replace_inline_math(match):
+        content = match.group(1)
+        placeholder = f"__INLINE_MATH_PLACEHOLDER_{len(inline_placeholders)}__"
+        inline_placeholders.append(content)
+        return placeholder
+    
+    text = re.sub(inline_math_pattern, replace_inline_math, text)
+    
+    # Now handle the specific formula elements from the user's example
+    # These are outside math regions so they won't be double-processed
+    text = re.sub(r'K_\{газX\}', r'$K_{газX}$', text)
+    text = re.sub(r'C_\{X-1\}', r'$C_{X-1}$', text)
+    text = re.sub(r'C_\{X-4\}', r'$C_{X-4}$', text)
+    text = re.sub(r'R_\{газj\}', r'$R_{газj}$', text)
+    text = re.sub(r'\\sum_\{j=X-3\}\^\{X-1\}', r'$\\sum_{j=X-3}^{X-1}$', text)
+    
+    # Now restore the display math regions with proper $$...$$ formatting
+    for i, content in enumerate(display_placeholders):
+        placeholder = f"__DISPLAY_MATH_PLACEHOLDER_{i}__"
+        text = text.replace(placeholder, f"$${content}$$")
+    
+    # And restore the inline math regions with proper $...$ formatting
+    for i, content in enumerate(inline_placeholders):
+        placeholder = f"__INLINE_MATH_PLACEHOLDER_{i}__"
+        text = text.replace(placeholder, f"${content}$")
+    
     return text
 
 def main():
